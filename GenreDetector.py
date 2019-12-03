@@ -15,7 +15,7 @@ from nltk.tokenize import RegexpTokenizer
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.metrics import accuracy_score, precision_score, recall_score
 from sklearn.tree import DecisionTreeClassifier
-
+from sklearn.metrics import confusion_matrix
 
 def loadData():
     with open('lyrics.csv', 'rt') as f:
@@ -73,6 +73,9 @@ def classifyModel(X_train_cv, X_test_cv, y_train, y_test):
     predictions = dt.predict(X_test_cv)
     # get accuracy
     accuracy = accuracy_score(y_test, predictions) * 100
+    results = confusion_matrix(y_test, predictions)
+    print("Confusion Matrix :")
+    print(results)
     return accuracy
 
 def main():
@@ -101,6 +104,7 @@ def main():
     accuracy = makeClassifier(lyricsShortened, labelsShortened)
     #accuracy = makeClassifier(lyrics, numLabels)
     print("Accuracy: " + repr(accuracy) + "%")
+
 
 
 main()
