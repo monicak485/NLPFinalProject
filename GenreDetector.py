@@ -4,6 +4,8 @@ import sklearn as sk
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import KFold
 from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.model_selection import cross_validate
+from sklearn.naive_bayes import MultinomialNB
 import numpy as np
 import csv
 from random import randint
@@ -15,22 +17,60 @@ from nltk.tokenize import RegexpTokenizer
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.metrics import accuracy_score, precision_score, recall_score
 from sklearn.tree import DecisionTreeClassifier
-
+import pandas as pd
 
 def loadData():
-    with open('lyrics.csv', 'rt') as f:
+    with open('cleaned.csv', 'rt') as f:
         reader = csv.reader(f)
         songData = list(reader)
     labels = list()
     lyrics = list()
 
     for song in songData:
-        labels.append(song[4])
-        song[5].replace('\n', ' ')
-        lyrics.append(song[5])
+        labels.append(song[0])
+        song[1].replace('\n', ' ')
+        lyrics.append(song[1])
 
     return lyrics, labels
 
+# finding the average accuracy in NBClassifier
+def avgAccuracy(scores, count):
+    cuts = float(len(scores))
+    for num in scores:
+        count = count + num
+    result = count / cuts
+    average = float(result)
+    return average*100
+
+
+def makeNBClassifier(data, labels):
+    # Columns that I will use for the separate dataframes:
+    makeCols = ["Lyrics", "Labels"]
+    # Put the columns in the dataframe
+    dataframe = pd.DataFrame(columns = makeCols)
+    # Set the Label column to the labels
+    dataframe['Labels'] = labels
+    # Set the Lyrics column to lyrics
+    dataframe['Lyrics'] = data
+    ly = dataframe['Lyrics']
+
+    # A Naïve Bayes classifier with add-1 smoothing using binary bagof-words features
+    # Code from the linked website for the assignment: https://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.CountVectorizer.html
+    vectorizer = CountVectorizer()
+    hello = vectorizer.fit_transform(ly)
+    X = hello.toarray()
+    Y = dataframe['Labels']
+
+    # Naive Bayes Classifier code found from documentation: https://scikit-learn.org/stable/modules/generated/sklearn.naive_bayes.MultinomialNB.html
+    clf = MultinomialNB()
+    clf = MultinomialNB(alpha=1.0, class_prior=None, fit_prior=True)
+    clf.fit(X, Y)
+    cv_results = cross_validate(clf, X, Y, cv=10)
+
+    # Need to find the accuracy for the 'test_score' part of the cv_results
+    count = 0.00
+    avg = avgAccuracy(cv_results['test_score'],count)
+    return avg
 
 def makeClassifier(data, labels):
     # create CV
@@ -98,9 +138,12 @@ def main():
         lyricsShortened.append(lyrics[randint(1, len(lyrics))])
         labelsShortened.append(numLabels[randint(1, len(numLabels))])
 
-    accuracy = makeClassifier(lyricsShortened, labelsShortened)
+    accuracyClassifier1 = makeClassifier(lyricsShortened, labelsShortened)
+    accuracyClassifier2 = makeNBClassifier(lyricsShortened, labelsShortened)
     #accuracy = makeClassifier(lyrics, numLabels)
-    print("Accuracy: " + repr(accuracy) + "%")
+    print("Accuracy for 1st Classifier: " + repr(accuracyClassifier1) + "%")
+    print("Accuracy for 2nd Classifier: " + repr(accuracyClassifier2) + "%")
+
 
 
 main()
