@@ -134,15 +134,15 @@ def main():
     # will be removed in final
     lyricsShortened = list()
     labelsShortened = list()
-    for x in range(100):
+    for x in range(1000):
         lyricsShortened.append(lyrics[randint(1, len(lyrics))])
         labelsShortened.append(numLabels[randint(1, len(numLabels))])
 
     accuracyClassifier1 = makeClassifier(lyricsShortened, labelsShortened)
     accuracyClassifier2 = makeNBClassifier(lyricsShortened, labelsShortened)
     #accuracy = makeClassifier(lyrics, numLabels)
-    print("Accuracy for 1st Classifier: " + repr(accuracyClassifier1) + "%")
-    print("Accuracy for 2nd Classifier: " + repr(accuracyClassifier2) + "%")
+    print("Accuracy for Decision Tree Classifier: " + repr(accuracyClassifier1) + "%")
+    print("Accuracy for Naive Bayes Classifier: " + repr(accuracyClassifier2) + "%")
 
 
 
