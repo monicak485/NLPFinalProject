@@ -1,7 +1,7 @@
 # NLP Final Project
 # Trigram Model to detect song genre based on lyrics
 import sklearn as sk
-from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import KFold
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.model_selection import cross_validate
@@ -42,6 +42,38 @@ def avgAccuracy(scores, count):
     average = float(result)
     return average*100
 
+
+def makeLRClassifier(data, labels):
+    # create CV
+    cv = sk.feature_extraction.text.CountVectorizer()
+    # get splits based on kfxv
+    kf = sk.model_selection.KFold(n_splits=10)
+    trainData = []
+    trainLabels = []
+    testData = []
+    testLabels = []
+    avgAccuracy = 0
+    avgf1 = 0
+    for train_index, test_index in kf.split(data, labels):
+        #sort train and test arrays based on kf splits
+        for x in np.nditer(train_index):
+            trainData.append(data[x])
+            trainLabels.append(labels[x])
+        for x in np.nditer(test_index):
+            testData.append(data[x])
+            testLabels.append(labels[x])
+        # create the CV arrays based on train and test data
+        train_cv = cv.fit_transform(trainData)
+        test_cv = cv.transform(testData)
+        # normalize
+        tfidf = TfidfTransformer()
+        tfidf_features = tfidf.fit_transform(train_cv)
+        # classify this fold
+        accuracy = classifyLRModel(tfidf_features, test_cv, trainLabels, testLabels)
+        avgAccuracy += accuracy
+    # get avg scores over all folds
+    accuracy = avgAccuracy/10
+    return accuracy
 
 def makeNBClassifier(data, labels):
     # Columns that I will use for the separate dataframes:
@@ -115,6 +147,16 @@ def classifyModel(X_train_cv, X_test_cv, y_train, y_test):
     accuracy = accuracy_score(y_test, predictions) * 100
     return accuracy
 
+def classifyLRModel(X_train_cv, X_test_cv, y_train, y_test):
+    # creates model Logictic Regression Model
+    dt = LogisticRegression(solver='lbfgs', multi_class = 'auto', max_iter = 1000)
+    dt.fit(X_train_cv, y_train)
+    # predict
+    predictions = dt.predict(X_test_cv)
+    # get accuracy
+    accuracy = accuracy_score(y_test, predictions) * 100
+    return accuracy
+
 def main():
     lyrics, labels = loadData()
     # convert genres into numerical labels
@@ -140,9 +182,11 @@ def main():
 
     accuracyClassifier1 = makeClassifier(lyricsShortened, labelsShortened)
     accuracyClassifier2 = makeNBClassifier(lyricsShortened, labelsShortened)
-    #accuracy = makeClassifier(lyrics, numLabels)
+    accuracyClassifier3 = makeLRClassifier(lyricsShortened, labelsShortened)
+
     print("Accuracy for Decision Tree Classifier: " + repr(accuracyClassifier1) + "%")
     print("Accuracy for Naive Bayes Classifier: " + repr(accuracyClassifier2) + "%")
+    print("Accuracy for Logistic Regression Classifier: " + repr(accuracyClassifier3) + "%")
 
 
 
